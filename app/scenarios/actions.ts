@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
+import { generateFirstAssistantMessage } from "@/lib/ai/chat";
 import {
   fillScenarioField,
   generateScenarioContent,
@@ -88,6 +89,24 @@ export async function createScenarioAction(input: {
     .single();
   if (convErr || !conversation) {
     throw new Error(convErr?.message ?? "Failed to create conversation");
+  }
+
+  // Generate the opening AI line so the chat page lands with a bubble
+  // already present (spec scenario 6).
+  try {
+    const firstLine = await generateFirstAssistantMessage(scenario);
+    if (firstLine.length > 0) {
+      await supabase.from("messages").insert({
+        conversation_id: conversation.id,
+        user_id: userId,
+        role: "assistant",
+        original_text: firstLine,
+        english_text: firstLine,
+      });
+    }
+  } catch {
+    // If the opener fails, the chat still works — user just sees an
+    // empty bubble list and can start typing.
   }
 
   revalidatePath("/", "layout");
