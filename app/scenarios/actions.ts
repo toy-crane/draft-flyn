@@ -113,6 +113,58 @@ export async function createScenarioAction(input: {
   redirect(`/conversations/${conversation.id}`);
 }
 
+export async function startNewConversationForScenarioAction(
+  scenarioId: string,
+): Promise<never> {
+  const { supabase, userId } = await requireUserId();
+
+  const { data: scenario } = await supabase
+    .from("scenarios")
+    .select("*")
+    .eq("id", scenarioId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (!scenario) throw new Error("Scenario not found");
+
+  // Auto-complete any existing in_progress conversation (plan decision §18).
+  await supabase
+    .from("conversations")
+    .update({
+      status: "completed",
+      completed_at: new Date().toISOString(),
+    })
+    .eq("scenario_id", scenarioId)
+    .eq("user_id", userId)
+    .eq("status", "in_progress");
+
+  const { data: conversation, error } = await supabase
+    .from("conversations")
+    .insert({ scenario_id: scenarioId, user_id: userId })
+    .select()
+    .single();
+  if (error || !conversation) {
+    throw new Error(error?.message ?? "Failed to create conversation");
+  }
+
+  try {
+    const firstLine = await generateFirstAssistantMessage(scenario);
+    if (firstLine.length > 0) {
+      await supabase.from("messages").insert({
+        conversation_id: conversation.id,
+        user_id: userId,
+        role: "assistant",
+        original_text: firstLine,
+        english_text: firstLine,
+      });
+    }
+  } catch {
+    // Empty open is acceptable.
+  }
+
+  revalidatePath("/", "layout");
+  redirect(`/conversations/${conversation.id}`);
+}
+
 export async function completeConversationAction(
   conversationId: string,
 ): Promise<void> {
