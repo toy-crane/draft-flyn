@@ -21,6 +21,7 @@ import {
   LearnMorePanel,
   type LearnMoreContext,
 } from "./learn-more-panel";
+import { RetryBanner } from "./retry-banner";
 import { MessageBubble } from "./message-bubble";
 import { PromptInput, type PromptInputHandle } from "./prompt-input";
 import { TranslationPreview } from "./translation-preview";
@@ -115,7 +116,7 @@ export function ChatView({
     [],
   );
 
-  const { messages, sendMessage, status, error } = useChat({
+  const { messages, sendMessage, regenerate, status, error } = useChat({
     id: conversationId,
     messages: initialMessages.map(toUIMessage),
     transport,
@@ -333,9 +334,10 @@ export function ChatView({
             );
           })}
           {error && (
-            <p className="text-destructive px-2 py-1 text-xs">
-              {error.message ?? "오류가 발생했어요. 다시 시도해 주세요."}
-            </p>
+            <RetryBanner
+              message={error.message}
+              onRetry={() => void regenerate()}
+            />
           )}
         </ConversationContent>
         <ConversationScrollButton />
