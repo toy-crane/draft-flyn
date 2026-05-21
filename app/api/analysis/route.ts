@@ -44,7 +44,11 @@ export async function POST(req: Request) {
       correction: result.correction,
       goals_achieved: result.goals_achieved,
     })
-    .eq("id", messageId);
+    .eq("id", messageId)
+    // Cross-conversation guard: even though RLS ensures the row belongs
+    // to the requester, a stale messageId from another conversation
+    // shouldn't be writable from this route.
+    .eq("conversation_id", conversationId);
 
   if (result.goals_achieved.length > 0) {
     const existing = new Set(conversation.goals_achieved ?? []);

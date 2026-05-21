@@ -76,6 +76,9 @@ export async function POST(req: Request) {
   }
 
   const modelMessages = await convertToModelMessages(messages);
+  // Pre-generate the assistant id so the onFinish insert is idempotent
+  // across retries (RetryBanner regenerate would otherwise double-insert).
+  const assistantMessageId = crypto.randomUUID();
   const result = streamText({
     model: CHAT_MODEL,
     system: buildChatSystemPrompt(scenario),
@@ -83,7 +86,14 @@ export async function POST(req: Request) {
     onFinish: async ({ text }) => {
       const assistantText = text.trim();
       if (!assistantText) return;
+      const { data: existing } = await supabase
+        .from("messages")
+        .select("id")
+        .eq("id", assistantMessageId)
+        .maybeSingle();
+      if (existing) return;
       await supabase.from("messages").insert({
+        id: assistantMessageId,
         conversation_id: conversationId,
         user_id: user.id,
         role: "assistant",
