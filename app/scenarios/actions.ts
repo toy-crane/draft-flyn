@@ -165,6 +165,39 @@ export async function startNewConversationForScenarioAction(
   redirect(`/conversations/${conversation.id}`);
 }
 
+export async function updateScenarioAction(
+  scenarioId: string,
+  fields: ScenarioFields,
+): Promise<void> {
+  const { supabase, userId } = await requireUserId();
+  const { error } = await supabase
+    .from("scenarios")
+    .update({
+      situation: fields.situation,
+      their_role: fields.theirRole,
+      my_role: fields.myRole,
+      memo: fields.memo ?? null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", scenarioId)
+    .eq("user_id", userId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/", "layout");
+}
+
+export async function deleteScenarioAction(
+  scenarioId: string,
+): Promise<void> {
+  const { supabase, userId } = await requireUserId();
+  const { error } = await supabase
+    .from("scenarios")
+    .delete()
+    .eq("id", scenarioId)
+    .eq("user_id", userId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/", "layout");
+}
+
 export async function completeConversationAction(
   conversationId: string,
 ): Promise<void> {

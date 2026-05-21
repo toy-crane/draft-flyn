@@ -10,10 +10,12 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { ScenarioActions } from "@/components/scenarios/scenario-actions";
 import {
   getRecentHistory,
   getScenariosForSidebar,
@@ -67,6 +69,9 @@ export async function AppSidebar() {
                         )}
                       </Link>
                     </SidebarMenuButton>
+                    <SidebarMenuAction asChild showOnHover>
+                      <ScenarioActions scenarioId={scenario.id} />
+                    </SidebarMenuAction>
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>
