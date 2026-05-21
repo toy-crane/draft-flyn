@@ -2,7 +2,12 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
+import { DirtyGuardProvider } from "@/components/scenarios/dirty-guard";
 import { ScenarioForm } from "@/components/scenarios/scenario-form";
+
+function renderForm(ui: React.ReactElement) {
+  return render(<DirtyGuardProvider>{ui}</DirtyGuardProvider>);
+}
 
 describe("ScenarioForm", () => {
   const noopFill = vi.fn(async () => "");
@@ -14,7 +19,7 @@ describe("ScenarioForm", () => {
 
   it("disables 다음 until the 3 required fields are filled", async () => {
     const onSubmit = vi.fn();
-    render(
+    renderForm(
       <ScenarioForm
         submitting={false}
         onSubmit={onSubmit}
@@ -38,7 +43,7 @@ describe("ScenarioForm", () => {
 
   it("emits trimmed values on submit", async () => {
     const onSubmit = vi.fn();
-    render(
+    renderForm(
       <ScenarioForm
         submitting={false}
         onSubmit={onSubmit}
@@ -62,7 +67,7 @@ describe("ScenarioForm", () => {
 
   it("calls fillField on the field-level ✨ button", async () => {
     const fillField = vi.fn(async () => "바리스타");
-    render(
+    renderForm(
       <ScenarioForm
         submitting={false}
         onSubmit={vi.fn()}
