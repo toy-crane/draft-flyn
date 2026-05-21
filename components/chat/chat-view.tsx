@@ -14,6 +14,7 @@ import type { Message as DbMessage, Correction } from "@/types/message";
 import type { Scenario } from "@/types/scenario";
 import { useRouter } from "next/navigation";
 
+import { ChatEndMenu } from "./chat-end-menu";
 import { CompletionPromptDialog } from "./completion-prompt-dialog";
 import { GoalBar } from "./goal-bar";
 import { MessageBubble } from "./message-bubble";
@@ -266,6 +267,15 @@ export function ChatView({
 
   return (
     <div className="flex h-full flex-col">
+      <div className="flex items-center justify-between border-b px-4 py-2">
+        <p className="text-muted-foreground truncate text-xs">
+          {scenario.summary || scenario.situation}
+        </p>
+        <ChatEndMenu
+          achieved={achievedGoalIds.length}
+          total={scenario.goals.length}
+        />
+      </div>
       <GoalBar goals={scenario.goals} achieved={achievedGoalIds} />
 
       <Conversation className="flex-1">
