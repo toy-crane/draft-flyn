@@ -1,0 +1,1208 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wireframe: Flyn</title>
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  :root {
+    --w-bg: #f5f5f5;
+    --w-border: #ccc;
+    --w-text: #555;
+    --w-muted: #aaa;
+    --w-fill: #eee;
+  }
+
+  * {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    color: var(--w-text);
+  }
+
+  body { background: var(--w-bg); }
+
+  /* Screen nav */
+  nav { position: sticky; top: 0; z-index: 40; background: var(--w-bg); border-bottom: 1px solid var(--w-border); }
+  nav button { cursor: pointer; font-size: 13px; }
+  nav button:hover { background: var(--w-fill); border-radius: 4px; }
+  nav button.active { font-weight: bold; border-bottom: 2px solid var(--w-text); }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* Viewport toggle */
+  .vp-toggle button {
+    font-size: 12px; padding: 2px 8px;
+    border: 1px solid var(--w-border); cursor: pointer; background: white;
+  }
+  .vp-toggle button:first-child { border-radius: 4px 0 0 4px; }
+  .vp-toggle button:last-child { border-radius: 0 4px 4px 0; border-left: none; }
+  .vp-toggle button.active { background: var(--w-text); color: white; }
+
+  /* Mobile viewport frame */
+  body.viewport-mobile .screen-content {
+    max-width: 375px !important;
+    margin: 24px auto !important;
+    border: 2px solid var(--w-border);
+    border-radius: 24px;
+    min-height: 667px;
+    background: white;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    padding: 32px 16px !important;
+    overflow: hidden;
+  }
+
+  /* Screen Notes */
+  .screen-notes {
+    background: #fffde7;
+    border-left: 3px solid #ffd54f;
+    padding: 12px 16px;
+    margin-top: 24px;
+    font-size: 13px;
+    border-radius: 0 4px 4px 0;
+  }
+  .screen-notes summary {
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 12px;
+    color: #b0a050;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .screen-notes p { margin: 6px 0 2px; color: #777; }
+  .screen-notes ul { margin: 4px 0 0 16px; padding: 0; color: #777; }
+  .screen-notes li { margin: 2px 0; }
+
+  /* w- prefix custom helpers */
+  .w-box { border: 1px solid var(--w-border); border-radius: 6px; background: white; }
+  .w-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    border: 1px solid var(--w-border); border-radius: 999px;
+    padding: 4px 10px; font-size: 12px; background: white; cursor: pointer;
+  }
+  .w-section-label {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--w-muted); padding: 8px 12px 4px;
+  }
+  .w-side-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 12px; font-size: 13px; border-radius: 4px; cursor: pointer;
+  }
+  .w-side-item:hover { background: var(--w-fill); }
+  .w-side-item.active { background: var(--w-fill); }
+  .w-side-item .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--w-text); }
+  .w-side-item .dot-ring { width: 6px; height: 6px; border-radius: 50%; border: 1px solid var(--w-muted); }
+  .w-bubble-user {
+    margin-left: auto; max-width: 80%;
+    background: var(--w-fill); border-radius: 12px;
+    padding: 10px 12px; font-size: 13px;
+  }
+  .w-bubble-ai {
+    margin-right: auto; max-width: 80%;
+    background: white; border: 1px solid var(--w-border); border-radius: 12px;
+    padding: 10px 12px; font-size: 13px;
+  }
+  .w-label-section {
+    margin-top: 8px; border-top: 1px dashed var(--w-border);
+    padding-top: 6px; font-size: 12px;
+  }
+  .w-label-header {
+    display: flex; align-items: center; justify-content: space-between;
+    color: var(--w-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+  }
+  .w-goal-card {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 10px; border-radius: 6px; border: 1px solid var(--w-border);
+    background: white; font-size: 12px;
+  }
+  .w-checkbox-empty { width: 14px; height: 14px; border: 1px solid var(--w-muted); border-radius: 3px; flex-shrink: 0; }
+  .w-checkbox-done { width: 14px; height: 14px; border: 1px solid var(--w-text); border-radius: 3px; flex-shrink: 0; background: var(--w-text); color: white; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+  .w-input {
+    border: 1px solid var(--w-border); border-radius: 6px;
+    padding: 8px 12px; font-size: 13px; background: white; width: 100%;
+  }
+  .w-btn-primary {
+    background: var(--w-text); color: white; border-radius: 6px;
+    padding: 8px 14px; font-size: 13px; border: none; cursor: pointer;
+  }
+  .w-btn-secondary {
+    background: white; border: 1px solid var(--w-border); border-radius: 6px;
+    padding: 8px 14px; font-size: 13px; cursor: pointer;
+  }
+  .w-btn-disabled {
+    background: var(--w-fill); color: var(--w-muted); border: 1px solid var(--w-border); border-radius: 6px;
+    padding: 8px 14px; font-size: 13px;
+  }
+  .w-sheet {
+    position: absolute; top: 0; right: 0; bottom: 0;
+    width: 420px; background: white; border-left: 1px solid var(--w-border);
+    padding: 16px; box-shadow: -8px 0 24px rgba(0,0,0,0.06);
+    display: flex; flex-direction: column;
+  }
+  body.viewport-mobile .w-sheet {
+    top: auto; left: 0; right: 0; bottom: 0;
+    width: 100%; height: 65%;
+    border-left: none; border-top: 1px solid var(--w-border);
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -8px 24px rgba(0,0,0,0.06);
+  }
+  .w-modal-backdrop {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.04);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 30;
+  }
+  .w-modal {
+    background: white; border: 1px solid var(--w-border); border-radius: 8px;
+    padding: 20px; max-width: 360px; width: 90%;
+  }
+
+  /* Desktop: sidebar + main */
+  .w-app { display: flex; min-height: 600px; }
+  body.viewport-mobile .w-app { display: block; min-height: auto; }
+  .w-sidebar {
+    width: 260px; flex-shrink: 0;
+    border-right: 1px solid var(--w-border);
+    padding: 12px 8px; background: white;
+  }
+  body.viewport-mobile .w-sidebar { display: none; }
+  body.viewport-mobile .w-sidebar.mobile-open { display: block; width: 100%; border-right: none; border-bottom: 1px solid var(--w-border); }
+  .w-main { flex: 1; padding: 16px; min-width: 0; position: relative; }
+  body.viewport-mobile .w-main { padding: 8px; }
+
+  /* Mobile-only hamburger row */
+  .w-mobile-bar { display: none; align-items: center; justify-content: space-between; padding: 8px 4px; border-bottom: 1px solid var(--w-border); margin-bottom: 8px; }
+  body.viewport-mobile .w-mobile-bar { display: flex; }
+
+  /* 시나리오 토글 */
+  .scenario-toggle {
+    display: flex; gap: 6px; flex-wrap: wrap; align-items: center;
+    border: 1px dashed var(--w-border); border-radius: 6px;
+    padding: 8px 10px; margin-bottom: 14px;
+    font-size: 11px; background: #fffde7;
+  }
+  .scenario-toggle .label {
+    color: #b0a050; font-weight: bold; text-transform: uppercase;
+    letter-spacing: 0.05em; margin-right: 4px;
+  }
+  .scenario-toggle button {
+    border: 1px solid var(--w-border); border-radius: 999px;
+    padding: 3px 10px; background: white; cursor: pointer; font-size: 11px;
+    color: var(--w-text);
+  }
+  .scenario-toggle button.active { background: var(--w-text); color: white; border-color: var(--w-text); }
+</style>
+</head>
+<body class="p-0 m-0 viewport-mobile">
+
+<nav class="flex items-center gap-3 px-6 py-2 flex-wrap">
+  <span class="text-xs" style="color:var(--w-muted)">flyn / wireframe</span>
+  <button id="nav-0" onclick="show(0)" class="px-2 py-1">1. 로그인</button>
+  <button id="nav-1" onclick="show(1)" class="px-2 py-1">2. 빈 상태</button>
+  <button id="nav-2" onclick="show(2)" class="px-2 py-1">3. 시나리오 폼</button>
+  <button id="nav-3" onclick="show(3)" class="px-2 py-1">4. 목표 미리보기</button>
+  <button id="nav-4" onclick="show(4)" class="px-2 py-1">5. 채팅</button>
+  <button id="nav-5" onclick="show(5)" class="px-2 py-1">6. 히스토리 읽기</button>
+  <button id="nav-6" onclick="show(6)" class="px-2 py-1">7. 이어서/새로</button>
+  <button id="nav-7" onclick="show(7)" class="px-2 py-1">8. 더 알아보기</button>
+  <div class="vp-toggle flex ml-auto">
+    <button id="vp-desktop" onclick="setViewport('desktop')">Desktop</button>
+    <button id="vp-mobile" onclick="setViewport('mobile')" class="active">Mobile</button>
+  </div>
+</nav>
+
+<!-- ───────── 1. 로그인 ───────── -->
+<div id="screen-0" class="screen">
+  <div class="screen-content max-w-6xl mx-auto p-6">
+    <h2 class="text-lg font-bold mb-5" style="color:var(--w-muted); border-bottom:1px solid var(--w-border); padding-bottom:8px;">
+      1. 로그인
+    </h2>
+
+    <div class="w-box p-8 flex flex-col items-center text-center gap-5" style="min-height: 360px; justify-content:center;">
+      <div class="w-16 h-16 rounded-full flex items-center justify-center" style="background: var(--w-fill);">
+        <i data-lucide="message-circle" class="w-8 h-8"></i>
+      </div>
+      <div>
+        <div class="text-xl font-bold" style="color:var(--w-text)">Flyn</div>
+        <div class="text-xs mt-1" style="color:var(--w-muted)">영어 채팅으로 즉시 교정받기</div>
+      </div>
+      <button class="w-btn-primary flex items-center gap-2">
+        <i data-lucide="log-in" class="w-4 h-4"></i>
+        Continue with Google
+      </button>
+    </div>
+
+    <div class="screen-notes">
+      <details open>
+        <summary>Notes</summary>
+        <p>spec.md §1 — 비로그인 사용자가 어떤 URL이든 접근하면 도달한다</p>
+        <ul>
+          <li>트리거: 비로그인 상태로 진입</li>
+          <li>인터랙션: "Continue with Google" 클릭 → Google OAuth 팝업</li>
+          <li>전환: 성공 → 빈 상태 또는 메인. 실패/취소 → 이 화면 유지</li>
+        </ul>
+      </details>
+    </div>
+  </div>
+</div>
+
+<!-- ───────── 2. 빈 상태 ───────── -->
+<div id="screen-1" class="screen">
+  <div class="screen-content max-w-6xl mx-auto p-6">
+    <h2 class="text-lg font-bold mb-5" style="color:var(--w-muted); border-bottom:1px solid var(--w-border); padding-bottom:8px;">
+      2. 빈 상태 (첫 사용자)
+    </h2>
+
+    <div class="w-box w-app" style="overflow:hidden;">
+      <!-- Sidebar -->
+      <aside class="w-sidebar">
+        <div class="flex items-center gap-2 px-2 mb-3">
+          <i data-lucide="message-circle" class="w-4 h-4"></i>
+          <span class="text-sm font-bold">Flyn</span>
+        </div>
+        <button class="w-side-item w-full text-left" style="font-weight:bold;">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          새 시나리오
+        </button>
+      </aside>
+
+      <!-- Main -->
+      <main class="w-main">
+        <div class="w-mobile-bar">
+          <button><i data-lucide="menu" class="w-5 h-5"></i></button>
+          <span class="text-xs" style="color:var(--w-muted)">Flyn</span>
+          <button><i data-lucide="user" class="w-5 h-5"></i></button>
+        </div>
+
+        <div class="flex flex-col items-center justify-center text-center gap-5 py-12" style="min-height:480px;">
+          <div class="w-20 h-20 rounded-full flex items-center justify-center" style="background: var(--w-fill);">
+            <i data-lucide="sparkles" class="w-8 h-8"></i>
+          </div>
+          <div>
+            <div class="text-lg font-bold">첫 시나리오를 만들어보세요</div>
+            <div class="text-xs mt-2" style="color:var(--w-muted)">영어로 대화하면서 즉시 교정받을 수 있어요</div>
+          </div>
+
+          <div class="flex flex-wrap gap-2 justify-center max-w-md">
+            <button class="w-chip">☕ 카페 주문</button>
+            <button class="w-chip">💼 면접 연습</button>
+            <button class="w-chip">✈️ 공항 환승</button>
+            <button class="w-chip">🏥 병원 예약</button>
+            <button class="w-chip">🛒 마트 장보기</button>
+          </div>
+
+          <button class="w-btn-primary mt-2 flex items-center gap-2">
+            <i data-lucide="plus" class="w-4 h-4"></i>
+            첫 시나리오 만들기
+          </button>
+        </div>
+      </main>
+    </div>
+
+    <div class="screen-notes">
+      <details open>
+        <summary>Notes</summary>
+        <p>spec.md §2 — 로그인했지만 시나리오 0개일 때 메인 영역 안내</p>
+        <ul>
+          <li>트리거: 로그인 직후 또는 모든 시나리오 삭제 후</li>
+          <li>인터랙션: 사이드바의 "내 시나리오"·"히스토리" 섹션은 보이지 않음 / CTA 또는 "+ 새 시나리오"로 폼 진입 / 예시 칩 클릭은 폼 진입 + 칩 텍스트가 "상황" 필드에 채워짐 (가정)</li>
+          <li>전환: → 3. 시나리오 폼</li>
+        </ul>
+      </details>
+    </div>
+  </div>
+</div>
+
+<!-- ───────── 3. 시나리오 폼 ───────── -->
+<div id="screen-2" class="screen" data-default-scenario="default">
+  <div class="screen-content max-w-6xl mx-auto p-6">
+    <h2 class="text-lg font-bold mb-5" style="color:var(--w-muted); border-bottom:1px solid var(--w-border); padding-bottom:8px;">
+      3. 시나리오 생성·편집 폼 (메인 인라인)
+    </h2>
+
+    <div class="scenario-toggle">
+      <span class="label">시나리오</span>
+      <button data-toggle-scenario="default" onclick="setScenario(2,'default')">기본 (상황만 채움)</button>
+      <button data-toggle-scenario="scenario-4" onclick="setScenario(2,'scenario-4')">✨ 전체 채움 (시나리오 4)</button>
+      <button data-toggle-scenario="scenario-5" onclick="setScenario(2,'scenario-5')">이탈 확인 모달 (시나리오 5)</button>
+    </div>
+
+    <div class="w-box w-app" style="overflow:hidden; position:relative;">
+      <!-- Sidebar -->
+      <aside class="w-sidebar">
+        <div class="flex items-center gap-2 px-2 mb-3">
+          <i data-lucide="message-circle" class="w-4 h-4"></i>
+          <span class="text-sm font-bold">Flyn</span>
+        </div>
+        <button class="w-side-item w-full text-left active">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          새 시나리오
+        </button>
+        <div class="w-section-label">내 시나리오</div>
+        <div class="w-side-item"><span class="dot"></span>카페 주문 <i data-lucide="chevron-right" class="w-3 h-3 ml-auto"></i></div>
+        <div class="w-side-item"><span class="dot-ring"></span>면접 연습</div>
+        <div class="w-section-label">히스토리</div>
+        <div class="w-side-item"><span class="dot-ring"></span>친구와 수다 <span class="ml-auto text-xs" style="color:var(--w-muted)">5/19</span></div>
+      </aside>
+
+      <!-- Main -->
+      <main class="w-main">
+        <div class="w-mobile-bar">
+          <button><i data-lucide="menu" class="w-5 h-5"></i></button>
+          <span class="text-xs">새 시나리오</span>
+          <button><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-base font-bold">새 시나리오</h3>
+          <button class="w-btn-secondary flex items-center gap-1 text-xs">
+            <i data-lucide="sparkles" class="w-3 h-3"></i>
+            AI에게 전부 맡기기
+          </button>
+        </div>
+
+        <!-- ===== default / scenario-5 폼 (상황만 채움) ===== -->
+        <div data-scenario="default, scenario-5">
+          <!-- 필드: 상황 (첫 필드 — 윗 필드 없음 → 칩 X) -->
+          <div class="mb-4">
+            <label class="text-xs font-bold mb-1 block">상황 *</label>
+            <div class="flex gap-2 items-start">
+              <input class="w-input" placeholder="예: 카페에서" value="카페에서" />
+              <button class="w-btn-secondary flex items-center gap-1 text-xs px-2">
+                <i data-lucide="sparkles" class="w-3 h-3"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- 필드: 상대방 역할 (윗 필드 = 상황 "카페에서" 채워짐 → 카페 맥락 칩) -->
+          <div class="mb-4">
+            <label class="text-xs font-bold mb-1 block">상대방 역할 *</label>
+            <div class="flex gap-2 items-start">
+              <input class="w-input" placeholder="예: 바리스타" />
+              <button class="w-btn-secondary flex items-center gap-1 text-xs px-2">
+                <i data-lucide="sparkles" class="w-3 h-3"></i>
+              </button>
+            </div>
+            <div class="flex gap-1 mt-2 overflow-x-auto pb-1">
+              <button class="w-chip text-xs flex-shrink-0">바리스타</button>
+              <button class="w-chip text-xs flex-shrink-0">매니저</button>
+              <button class="w-chip text-xs flex-shrink-0">단골 손님</button>
+              <button class="w-chip text-xs flex-shrink-0">계산원</button>
+              <button class="w-chip text-xs flex-shrink-0">외부 배달원</button>
+            </div>
+          </div>
+
+          <!-- 필드: 내 역할 (바로 앞 필드 "상대방 역할" 비어있음 → 칩 X) -->
+          <div class="mb-4">
+            <label class="text-xs font-bold mb-1 block">내 역할 *</label>
+            <div class="flex gap-2 items-start">
+              <input class="w-input" placeholder="예: 손님" />
+              <button class="w-btn-secondary flex items-center gap-1 text-xs px-2">
+                <i data-lucide="sparkles" class="w-3 h-3"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- 필드: 메모 -->
+          <div class="mb-5">
+            <label class="text-xs font-bold mb-1 block">추가 메모 (선택)</label>
+            <textarea class="w-input" rows="3" placeholder="예: 비건이라 우유 못 마심"></textarea>
+          </div>
+
+          <div class="flex justify-end gap-2">
+            <button class="w-btn-secondary">취소</button>
+            <button class="w-btn-disabled">다음</button>
+          </div>
+        </div>
+
+        <!-- ===== scenario-4: ✨ 전체 채움 결과 ===== -->
+        <div data-scenario="scenario-4">
+          <div class="mb-4">
+            <label class="text-xs font-bold mb-1 block">상황 *</label>
+            <div class="flex gap-2 items-start">
+              <input class="w-input" value="카페에서" />
+              <button class="w-btn-secondary flex items-center gap-1 text-xs px-2">
+                <i data-lucide="sparkles" class="w-3 h-3"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label class="text-xs font-bold mb-1 block">상대방 역할 *</label>
+            <div class="flex gap-2 items-start">
+              <input class="w-input" value="바리스타" />
+              <button class="w-btn-secondary flex items-center gap-1 text-xs px-2">
+                <i data-lucide="sparkles" class="w-3 h-3"></i>
+              </button>
+            </div>
+            <!-- 채워진 후엔 칩이 유지됨 (다시 바꿀 수 있게) — 같은 카페 맥락 -->
+            <div class="flex gap-1 mt-2 overflow-x-auto pb-1">
+              <button class="w-chip text-xs flex-shrink-0">매니저</button>
+              <button class="w-chip text-xs flex-shrink-0">단골 손님</button>
+              <button class="w-chip text-xs flex-shrink-0">계산원</button>
+              <button class="w-chip text-xs flex-shrink-0">외부 배달원</button>
+            </div>
+          </div>
+
+          <!-- 내 역할: 윗 필드(상대방 역할) 채워짐 → 카페+바리스타 맥락 칩 -->
+          <div class="mb-4">
+            <label class="text-xs font-bold mb-1 block">내 역할 *</label>
+            <div class="flex gap-2 items-start">
+              <input class="w-input" value="손님" />
+              <button class="w-btn-secondary flex items-center gap-1 text-xs px-2">
+                <i data-lucide="sparkles" class="w-3 h-3"></i>
+              </button>
+            </div>
+            <div class="flex gap-1 mt-2 overflow-x-auto pb-1">
+              <button class="w-chip text-xs flex-shrink-0">처음 가는 손님</button>
+              <button class="w-chip text-xs flex-shrink-0">단골</button>
+              <button class="w-chip text-xs flex-shrink-0">외국인 여행객</button>
+              <button class="w-chip text-xs flex-shrink-0">시간 없는 직장인</button>
+            </div>
+          </div>
+
+          <div class="mb-5">
+            <label class="text-xs font-bold mb-1 block">추가 메모 (선택)</label>
+            <textarea class="w-input" rows="3">비건이라 우유 못 마심</textarea>
+          </div>
+
+          <div class="flex justify-end gap-2">
+            <button class="w-btn-secondary">취소</button>
+            <button class="w-btn-primary">다음</button>
+          </div>
+        </div>
+
+        <div class="screen-notes">
+          <details open>
+            <summary>Notes</summary>
+            <p>spec.md §3, §4, §5, §22 — 시나리오 생성·편집 동일 폼. 메인 인라인 (모달 X)</p>
+            <ul>
+              <li>트리거: "+ 새 시나리오" 클릭 / 시나리오 호버 메뉴 "편집"</li>
+              <li>인터랙션: 필드별 ✨ → 다른 필드 컨텍스트 반영해 그 필드만 채움 / 헤더 "AI에게 전부 맡기기" → 모든 필수 필드 채움 / 칩 클릭 → 해당 텍스트 입력 / 필수 3개 채워지면 "다음" 활성화</li>
+              <li>전환: "다음" → 4. 목표 미리보기 / "취소" 또는 사이드바 이탈 → 입력값 있으면 확인 모달</li>
+              <li>칩 표시 조건: 바로 앞 필드가 채워져 있을 때만 (윗 필드 비면 칩 영역 자체가 안 보임)</li>
+            </ul>
+          </details>
+        </div>
+      </main>
+
+      <!-- ===== scenario-5: 이탈 확인 모달 ===== -->
+      <div data-scenario="scenario-5" class="w-modal-backdrop">
+        <div class="w-modal">
+          <div class="text-sm font-bold mb-2">이 시나리오를 저장하지 않을까요?</div>
+          <div class="text-xs mb-4" style="color:var(--w-muted)">입력한 내용은 저장되지 않고 사라집니다.</div>
+          <div class="flex justify-end gap-2">
+            <button class="w-btn-secondary text-xs">계속 작성</button>
+            <button class="w-btn-primary text-xs">저장 안 함</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ───────── 4. 목표 미리보기 ───────── -->
+<div id="screen-3" class="screen">
+  <div class="screen-content max-w-6xl mx-auto p-6">
+    <h2 class="text-lg font-bold mb-5" style="color:var(--w-muted); border-bottom:1px solid var(--w-border); padding-bottom:8px;">
+      4. 목표 미리보기 (폼 제출 후)
+    </h2>
+
+    <div class="w-box w-app" style="overflow:hidden;">
+      <aside class="w-sidebar">
+        <div class="flex items-center gap-2 px-2 mb-3">
+          <i data-lucide="message-circle" class="w-4 h-4"></i>
+          <span class="text-sm font-bold">Flyn</span>
+        </div>
+        <button class="w-side-item w-full text-left">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          새 시나리오
+        </button>
+        <div class="w-section-label">내 시나리오</div>
+        <div class="w-side-item active"><span class="dot-ring"></span>새 카페 시나리오</div>
+      </aside>
+
+      <main class="w-main">
+        <div class="w-mobile-bar">
+          <button><i data-lucide="arrow-left" class="w-5 h-5"></i></button>
+          <span class="text-xs">미리보기</span>
+          <span></span>
+        </div>
+
+        <!-- 요약 -->
+        <div class="mb-4 pb-3" style="border-bottom: 1px solid var(--w-border);">
+          <div class="text-xs mb-1" style="color:var(--w-muted)">시나리오 요약</div>
+          <div class="text-base font-bold">Bluebird Coffee에서 손님으로 라떼 주문하기</div>
+        </div>
+
+        <div class="flex items-center justify-between mb-3">
+          <div class="text-xs font-bold">학습 목표 3개</div>
+          <button class="w-btn-secondary text-xs flex items-center gap-1">
+            <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+            모두 재생성
+          </button>
+        </div>
+
+        <!-- 목표 카드 3개 (편집 불가, ↻만) -->
+        <div class="flex flex-col gap-2 mb-5">
+          <div class="w-box p-3 flex items-start gap-3">
+            <span class="text-xs font-bold" style="color:var(--w-muted)">1.</span>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-bold">Order a latte</div>
+              <div class="text-xs mt-1" style="color:var(--w-muted)">음료 주문하기</div>
+            </div>
+            <button class="text-xs"><i data-lucide="refresh-cw" class="w-3 h-3"></i></button>
+          </div>
+          <div class="w-box p-3 flex items-start gap-3">
+            <span class="text-xs font-bold" style="color:var(--w-muted)">2.</span>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-bold">Specify size and milk</div>
+              <div class="text-xs mt-1" style="color:var(--w-muted)">사이즈와 우유 종류 명시하기</div>
+            </div>
+            <button class="text-xs"><i data-lucide="refresh-cw" class="w-3 h-3"></i></button>
+          </div>
+          <div class="w-box p-3 flex items-start gap-3">
+            <span class="text-xs font-bold" style="color:var(--w-muted)">3.</span>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-bold">Express payment intent</div>
+              <div class="text-xs mt-1" style="color:var(--w-muted)">결제 의사 표현하기</div>
+            </div>
+            <button class="text-xs"><i data-lucide="refresh-cw" class="w-3 h-3"></i></button>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2">
+          <button class="w-btn-secondary">뒤로</button>
+          <button class="w-btn-primary flex items-center gap-1">
+            <i data-lucide="play" class="w-4 h-4"></i>
+            시작하기
+          </button>
+        </div>
+
+        <div class="screen-notes">
+          <details open>
+            <summary>Notes</summary>
+            <p>spec.md §3, §5 — 폼 제출 후 로딩 → 이 미리보기. AI가 1줄 요약 + 목표 3개 자동 생성</p>
+            <ul>
+              <li>트리거: 시나리오 폼 "다음" 제출</li>
+              <li>인터랙션: 각 카드의 ↻ → 해당 목표만 재생성 / 상단 "모두 재생성" → 3개 동시 / 카드 텍스트는 직접 편집 불가</li>
+              <li>전환: "시작하기" → 5. 채팅 (새 진행 중 인스턴스 생성) / "뒤로" → 폼으로</li>
+              <li>생성 실패 시: 미리보기 자리에 "다시 시도" 또는 "목표 없이 시작" 옵션</li>
+            </ul>
+          </details>
+        </div>
+      </main>
+    </div>
+  </div>
+</div>
+
+<!-- ───────── 5. 채팅 ───────── -->
+<div id="screen-4" class="screen" data-default-scenario="default">
+  <div class="screen-content max-w-6xl mx-auto p-6">
+    <h2 class="text-lg font-bold mb-5" style="color:var(--w-muted); border-bottom:1px solid var(--w-border); padding-bottom:8px;">
+      5. 채팅 (메인 화면 — 진행 중 시나리오)
+    </h2>
+
+    <div class="scenario-toggle">
+      <span class="label">시나리오</span>
+      <button data-toggle-scenario="default" onclick="setScenario(4,'default')">기본 (1/3 + ✓ + ✱)</button>
+      <button data-toggle-scenario="scenario-6" onclick="setScenario(4,'scenario-6')">빈 시작 (시나리오 6)</button>
+      <button data-toggle-scenario="scenario-9" onclick="setScenario(4,'scenario-9')">💡 대안 (시나리오 9)</button>
+      <button data-toggle-scenario="scenario-11" onclick="setScenario(4,'scenario-11')">한→영 미리보기 (시나리오 11)</button>
+      <button data-toggle-scenario="scenario-14" onclick="setScenario(4,'scenario-14')">3/3 종료 권유 (시나리오 14)</button>
+      <button data-toggle-scenario="scenario-19" onclick="setScenario(4,'scenario-19')">중도 종료 모달 (시나리오 19)</button>
+      <button data-toggle-scenario="scenario-24" onclick="setScenario(4,'scenario-24')">다시 시도 (시나리오 24)</button>
+      <button data-toggle-scenario="scenario-25" onclick="setScenario(4,'scenario-25')">분석 실패 fallback (시나리오 25)</button>
+    </div>
+
+    <div class="w-box w-app" style="overflow:hidden; position:relative;">
+      <!-- Sidebar -->
+      <aside class="w-sidebar">
+        <div class="flex items-center gap-2 px-2 mb-3">
+          <i data-lucide="message-circle" class="w-4 h-4"></i>
+          <span class="text-sm font-bold">Flyn</span>
+          <button class="ml-auto"><i data-lucide="panel-left-close" class="w-4 h-4"></i></button>
+        </div>
+        <button class="w-side-item w-full text-left">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          새 시나리오
+        </button>
+        <div class="w-section-label">내 시나리오</div>
+        <div class="w-side-item active"><span class="dot"></span>카페 주문 <i data-lucide="chevron-right" class="w-3 h-3 ml-auto"></i></div>
+        <div class="w-side-item"><span class="dot-ring"></span>면접 연습</div>
+        <div class="w-side-item"><span class="dot"></span>공항 환승 <i data-lucide="chevron-right" class="w-3 h-3 ml-auto"></i></div>
+        <div class="w-section-label">히스토리</div>
+        <div class="w-side-item"><span class="dot-ring"></span>친구와 수다 <span class="ml-auto text-xs" style="color:var(--w-muted)">5/19</span></div>
+        <div class="w-side-item"><span class="dot-ring"></span>병원 예약 <span class="ml-auto text-xs" style="color:var(--w-muted)">5/17</span></div>
+      </aside>
+
+      <!-- Main -->
+      <main class="w-main flex flex-col" style="min-height: 600px;">
+        <div class="w-mobile-bar">
+          <button><i data-lucide="menu" class="w-5 h-5"></i></button>
+          <span class="text-xs">카페 주문</span>
+          <button><i data-lucide="more-vertical" class="w-5 h-5"></i></button>
+        </div>
+
+        <!-- 헤더 (목표 진행 — 시나리오마다 달성률 다름) -->
+        <div class="pb-3 mb-3" style="border-bottom: 1px solid var(--w-border);">
+          <div class="flex items-center justify-between mb-2">
+            <div>
+              <div class="text-sm font-bold">카페 주문</div>
+              <div class="text-xs" style="color:var(--w-muted)">바리스타와 라떼 주문하기</div>
+            </div>
+            <button class="w-btn-secondary text-xs flex items-center gap-1">
+              <i data-lucide="x" class="w-3 h-3"></i>
+              종료
+            </button>
+          </div>
+
+          <!-- 목표 진행 — 0/3 (scenario-6) -->
+          <div data-scenario="scenario-6" class="flex flex-col gap-1.5 mt-2">
+            <div class="text-xs" style="color:var(--w-muted)">목표 진행 (0/3)</div>
+            <div class="flex flex-col @md:flex-row gap-1.5">
+              <div class="w-goal-card flex-1"><span class="w-checkbox-empty"></span><span>1. Order a latte</span></div>
+              <div class="w-goal-card flex-1"><span class="w-checkbox-empty"></span><span>2. Specify size and milk</span></div>
+              <div class="w-goal-card flex-1"><span class="w-checkbox-empty"></span><span>3. Express payment intent</span></div>
+            </div>
+          </div>
+
+          <!-- 목표 진행 — 1/3 (default, scenario-9, scenario-11, scenario-19, scenario-24, scenario-25) -->
+          <div data-scenario="default, scenario-9, scenario-11, scenario-19, scenario-24, scenario-25" class="flex flex-col gap-1.5 mt-2">
+            <div class="text-xs" style="color:var(--w-muted)">목표 진행 (1/3)</div>
+            <div class="flex flex-col @md:flex-row gap-1.5">
+              <div class="w-goal-card flex-1"><span class="w-checkbox-done">✓</span><span>1. Order a latte</span></div>
+              <div class="w-goal-card flex-1"><span class="w-checkbox-empty"></span><span>2. Specify size and milk</span></div>
+              <div class="w-goal-card flex-1"><span class="w-checkbox-empty"></span><span>3. Express payment intent</span></div>
+            </div>
+          </div>
+
+          <!-- 목표 진행 — 3/3 (scenario-14) -->
+          <div data-scenario="scenario-14" class="flex flex-col gap-1.5 mt-2">
+            <div class="text-xs" style="color:var(--w-muted)">목표 진행 (3/3) ✨</div>
+            <div class="flex flex-col @md:flex-row gap-1.5">
+              <div class="w-goal-card flex-1"><span class="w-checkbox-done">✓</span><span>1. Order a latte</span></div>
+              <div class="w-goal-card flex-1"><span class="w-checkbox-done">✓</span><span>2. Specify size and milk</span></div>
+              <div class="w-goal-card flex-1"><span class="w-checkbox-done">✓</span><span>3. Express payment intent</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== 메시지 리스트 ===== -->
+
+        <!-- default: AI / ✓ / AI / ✱ 펼침 / AI -->
+        <div data-scenario="default, scenario-19" class="flex-1 flex flex-col gap-3 mb-3 overflow-y-auto" style="min-height: 280px;">
+          <div class="w-bubble-ai">Hi! What can I get for you today?</div>
+          <div class="w-bubble-user">
+            <div>Hi, can I get a latte please?</div>
+            <div class="w-label-section">
+              <div class="w-label-header"><span>✓ OK</span></div>
+            </div>
+          </div>
+          <div class="w-bubble-ai">Sure! What size would you like?</div>
+          <div class="w-bubble-user">
+            <div>I want medium one and oat milk</div>
+            <div class="w-label-section">
+              <div class="w-label-header">
+                <span>✱ 교정</span>
+                <button><i data-lucide="chevron-up" class="w-3 h-3"></i></button>
+              </div>
+              <div class="mt-1 text-xs">
+                <div class="font-bold">A medium one with oat milk, please.</div>
+                <div style="color:var(--w-muted)" class="mt-0.5">"the medium one" 또는 "a medium one"이 자연스러워요. 우유 선택은 "with"으로 잇습니다.</div>
+                <button class="w-chip text-xs mt-2"><i data-lucide="message-circle-question" class="w-3 h-3"></i> 더 알아보기 →</button>
+              </div>
+            </div>
+          </div>
+          <div class="w-bubble-ai">Great, a medium oat latte coming up. Anything else?</div>
+        </div>
+
+        <!-- scenario-6: AI 첫 발화만 -->
+        <div data-scenario="scenario-6" class="flex-1 flex flex-col gap-3 mb-3 overflow-y-auto" style="min-height: 280px;">
+          <div class="w-bubble-ai">Hi! What can I get for you today?</div>
+        </div>
+
+        <!-- scenario-9: 💡 대안 -->
+        <div data-scenario="scenario-9" class="flex-1 flex flex-col gap-3 mb-3 overflow-y-auto" style="min-height: 280px;">
+          <div class="w-bubble-ai">Hi! What can I get for you today?</div>
+          <div class="w-bubble-user">
+            <div>Hi, can I get a latte please?</div>
+            <div class="w-label-section"><div class="w-label-header"><span>✓ OK</span></div></div>
+          </div>
+          <div class="w-bubble-ai">Sure! Anything else you'd like to add?</div>
+          <div class="w-bubble-user">
+            <div>I would like to purchase coffee, please.</div>
+            <div class="w-label-section">
+              <div class="w-label-header">
+                <span>💡 대안</span>
+                <button><i data-lucide="chevron-up" class="w-3 h-3"></i></button>
+              </div>
+              <div class="mt-1 text-xs">
+                <div class="font-bold">Can I get a coffee?</div>
+                <div style="color:var(--w-muted)" class="mt-0.5">의미는 통하지만 카페에서는 "Can I get..."이 더 자연스러워요. "purchase"는 격식 있는 상황에서 더 어울립니다.</div>
+                <button class="w-chip text-xs mt-2"><i data-lucide="message-circle-question" class="w-3 h-3"></i> 더 알아보기 →</button>
+              </div>
+            </div>
+          </div>
+          <div class="w-bubble-ai">Sure thing! What size?</div>
+        </div>
+
+        <!-- scenario-11: 한→영 미리보기 (메시지는 default 일부 + 입력창에 한글) -->
+        <div data-scenario="scenario-11" class="flex-1 flex flex-col gap-3 mb-3 overflow-y-auto" style="min-height: 280px;">
+          <div class="w-bubble-ai">Hi! What can I get for you today?</div>
+          <div class="w-bubble-user">
+            <div>Hi, can I get a latte please?</div>
+            <div class="w-label-section"><div class="w-label-header"><span>✓ OK</span></div></div>
+          </div>
+          <div class="w-bubble-ai">Sure! What size would you like?</div>
+        </div>
+
+        <!-- scenario-14: 3/3 달성 직전 메시지 -->
+        <div data-scenario="scenario-14" class="flex-1 flex flex-col gap-3 mb-3 overflow-y-auto" style="min-height: 280px;">
+          <div class="w-bubble-ai">Hi! What can I get for you today?</div>
+          <div class="w-bubble-user">
+            <div>Can I get a small oat latte, please?</div>
+            <div class="w-label-section"><div class="w-label-header"><span>✓ OK</span></div></div>
+          </div>
+          <div class="w-bubble-ai">Sure! That'll be $5.50.</div>
+          <div class="w-bubble-user">
+            <div>I'll pay by card.</div>
+            <div class="w-label-section"><div class="w-label-header"><span>✓ OK</span></div></div>
+          </div>
+          <div class="w-bubble-ai">Great, just tap here. Thank you!</div>
+        </div>
+
+        <!-- scenario-24: 다시 시도 (채팅 호출 실패) -->
+        <div data-scenario="scenario-24" class="flex-1 flex flex-col gap-3 mb-3 overflow-y-auto" style="min-height: 280px;">
+          <div class="w-bubble-ai">Hi! What can I get for you today?</div>
+          <div class="w-bubble-user">
+            <div>Hi, can I get a latte please?</div>
+            <div class="w-label-section"><div class="w-label-header"><span>✓ OK</span></div></div>
+          </div>
+          <div class="w-bubble-ai">Sure! What size?</div>
+          <div class="w-bubble-user" style="border: 1px dashed var(--w-border); background: var(--w-fill);">
+            <div>I want a large please</div>
+            <div class="w-label-section">
+              <div class="flex items-center justify-between text-xs">
+                <span style="color:var(--w-muted)"><i data-lucide="alert-circle" class="w-3 h-3 inline"></i> 응답 받기 실패</span>
+                <button class="w-btn-secondary text-xs flex items-center gap-1 px-2 py-1">
+                  <i data-lucide="refresh-cw" class="w-3 h-3"></i> 다시 시도
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- scenario-25: 분석 실패 — 마크 없는 사용자 버블 -->
+        <div data-scenario="scenario-25" class="flex-1 flex flex-col gap-3 mb-3 overflow-y-auto" style="min-height: 280px;">
+          <div class="w-bubble-ai">Hi! What can I get for you today?</div>
+          <div class="w-bubble-user">
+            <div>Hi, can I get a latte please?</div>
+            <div class="w-label-section"><div class="w-label-header"><span>✓ OK</span></div></div>
+          </div>
+          <div class="w-bubble-ai">Sure! What size?</div>
+          <!-- 마크 없음 — w-label-section 자체가 없음 -->
+          <div class="w-bubble-user">
+            <div>Medium please</div>
+          </div>
+          <div class="w-bubble-ai">Coming right up!</div>
+        </div>
+
+        <!-- ===== 입력창 영역 ===== -->
+
+        <!-- scenario-11: 한→영 미리보기 카드 + 한글 입력 -->
+        <div data-scenario="scenario-11">
+          <div class="w-box p-2 mb-2 flex items-center gap-2" style="background:#fffde7; border-color:#ffd54f;">
+            <i data-lucide="languages" class="w-4 h-4" style="color:#b0a050"></i>
+            <div class="flex-1 text-xs">
+              <span style="color:var(--w-muted)">→</span>
+              <span class="font-bold ml-1">A medium one, please.</span>
+            </div>
+            <button class="w-btn-primary text-xs flex items-center gap-1 px-2 py-1">
+              <i data-lucide="send-horizontal" class="w-3 h-3"></i> 이걸로 보내기
+            </button>
+          </div>
+          <div class="w-box flex items-end gap-2 p-2">
+            <textarea class="flex-1 border-none outline-none text-sm" rows="1" style="resize:none; background:transparent;">미디엄 사이즈로 주세요</textarea>
+            <button class="w-btn-primary p-2"><i data-lucide="send-horizontal" class="w-4 h-4"></i></button>
+          </div>
+        </div>
+
+        <!-- default 및 그 외 모든 시나리오: 일반 입력창 -->
+        <div data-scenario="default, scenario-6, scenario-9, scenario-14, scenario-19, scenario-24, scenario-25">
+          <div class="w-box flex items-end gap-2 p-2">
+            <textarea class="flex-1 border-none outline-none text-sm" rows="1" placeholder="영어로 메시지 입력... (막히면 한국어로 써도 돼요)" style="resize:none; background:transparent;"></textarea>
+            <button class="w-btn-primary p-2"><i data-lucide="send-horizontal" class="w-4 h-4"></i></button>
+          </div>
+        </div>
+
+        <div data-scenario="default, scenario-6, scenario-9, scenario-11, scenario-14, scenario-19, scenario-24, scenario-25" class="flex items-center justify-between mt-1 text-xs" style="color:var(--w-muted)">
+          <span>Enter 전송 / Shift+Enter 줄바꿈</span>
+          <span>0 / 500</span>
+        </div>
+
+        <div class="screen-notes">
+          <details open>
+            <summary>Notes</summary>
+            <p>spec.md §6-§14, §19, §23, §24, §25 — 진행 중 채팅의 기본 레이아웃 + 시나리오별 데이터 변형</p>
+            <ul>
+              <li>트리거: 미리보기 "시작하기" / 시나리오 클릭 → "이어서 하기"</li>
+              <li>인터랙션: 메시지 전송 → 사용자 버블 + 채팅 응답 스트리밍 + 분석 마크(병렬, 늦게 도착) / 라벨드 섹션 [⌃/⌄] 토글 / ✱·💡 섹션 "더 알아보기" → Sheet 열림 / 헤더 "종료" → 중도 종료 모달</li>
+              <li>전환: 3/3 달성 → 종료 권유 모달 / "끝내기" → 사이드바 히스토리로 이동 / "더 대화" → 채팅 계속</li>
+              <li>실패 모드: 채팅 호출 실패 → 사용자 버블 옆 "다시 시도" / 분석 호출 실패 → 마크 없이 조용히 진행</li>
+            </ul>
+          </details>
+        </div>
+      </main>
+
+      <!-- ===== 모달 영역 ===== -->
+
+      <!-- scenario-14: 종료 권유 모달 -->
+      <div data-scenario="scenario-14" class="w-modal-backdrop">
+        <div class="w-modal">
+          <div class="text-sm font-bold mb-2 flex items-center gap-2">
+            <i data-lucide="party-popper" class="w-4 h-4"></i>
+            목표 다 했어요! 끝낼까요?
+          </div>
+          <div class="text-xs mb-4" style="color:var(--w-muted)">목표 3개를 모두 달성했어요. 종료하면 히스토리로 이동합니다.</div>
+          <div class="flex justify-end gap-2">
+            <button class="w-btn-secondary text-xs">더 대화</button>
+            <button class="w-btn-primary text-xs">끝내기</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- scenario-19: 중도 종료 확인 모달 -->
+      <div data-scenario="scenario-19" class="w-modal-backdrop">
+        <div class="w-modal">
+          <div class="text-sm font-bold mb-2">목표 1/3 달성, 정말 종료할까요?</div>
+          <div class="text-xs mb-4" style="color:var(--w-muted)">진행 중 상태로 유지됩니다 (히스토리에 보관되지 않음). 사이드바에서 "이어서 하기"로 다시 들어올 수 있어요.</div>
+          <div class="flex justify-end gap-2">
+            <button class="w-btn-secondary text-xs">취소</button>
+            <button class="w-btn-primary text-xs">종료</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ───────── 6. 히스토리 읽기 전용 ───────── -->
+<div id="screen-5" class="screen">
+  <div class="screen-content max-w-6xl mx-auto p-6">
+    <h2 class="text-lg font-bold mb-5" style="color:var(--w-muted); border-bottom:1px solid var(--w-border); padding-bottom:8px;">
+      6. 종료된 대화 — 읽기 전용 보기
+    </h2>
+
+    <div class="w-box w-app" style="overflow:hidden;">
+      <aside class="w-sidebar">
+        <div class="flex items-center gap-2 px-2 mb-3">
+          <i data-lucide="message-circle" class="w-4 h-4"></i>
+          <span class="text-sm font-bold">Flyn</span>
+        </div>
+        <button class="w-side-item w-full text-left">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          새 시나리오
+        </button>
+        <div class="w-section-label">내 시나리오</div>
+        <div class="w-side-item"><span class="dot"></span>면접 연습 <i data-lucide="chevron-right" class="w-3 h-3 ml-auto"></i></div>
+        <div class="w-section-label">히스토리</div>
+        <div class="w-side-item active"><span class="dot-ring"></span>친구와 수다 <span class="ml-auto text-xs" style="color:var(--w-muted)">5/19</span></div>
+        <div class="w-side-item"><span class="dot-ring"></span>병원 예약 <span class="ml-auto text-xs" style="color:var(--w-muted)">5/17</span></div>
+      </aside>
+
+      <main class="w-main flex flex-col" style="min-height: 600px;">
+        <div class="w-mobile-bar">
+          <button><i data-lucide="menu" class="w-5 h-5"></i></button>
+          <span class="text-xs">친구와 수다 · 5/19</span>
+          <button><i data-lucide="more-vertical" class="w-5 h-5"></i></button>
+        </div>
+
+        <!-- 헤더 — 읽기 전용 표시 + CTA -->
+        <div class="pb-3 mb-3" style="border-bottom: 1px solid var(--w-border);">
+          <div class="flex items-center justify-between mb-2">
+            <div>
+              <div class="text-sm font-bold flex items-center gap-2">
+                친구와 수다
+                <span class="text-xs px-2 py-0.5 rounded" style="background:var(--w-fill); color:var(--w-muted)">읽기 전용 · 5/19 종료</span>
+              </div>
+              <div class="text-xs mt-0.5" style="color:var(--w-muted)">친구와 일상 이야기 나누기</div>
+            </div>
+            <button class="w-btn-primary text-xs flex items-center gap-1">
+              <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
+              다시 시작하기
+            </button>
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <div class="text-xs" style="color:var(--w-muted)">목표 진행 (3/3)</div>
+            <div class="flex flex-col @md:flex-row gap-1.5">
+              <div class="w-goal-card flex-1"><span class="w-checkbox-done">✓</span><span>1. Greet a friend</span></div>
+              <div class="w-goal-card flex-1"><span class="w-checkbox-done">✓</span><span>2. Share weekend plans</span></div>
+              <div class="w-goal-card flex-1"><span class="w-checkbox-done">✓</span><span>3. Ask back about theirs</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 메시지들 (인터랙션은 펼침/접힘 + ✱ 더 알아보기만) -->
+        <div class="flex-1 flex flex-col gap-3 mb-3 overflow-y-auto" style="min-height: 280px;">
+          <div class="w-bubble-ai">Hey! How was your weekend?</div>
+          <div class="w-bubble-user">
+            <div>I went to mountain</div>
+            <div class="w-label-section">
+              <div class="w-label-header">
+                <span>✱ 교정</span>
+                <button><i data-lucide="chevron-up" class="w-3 h-3"></i></button>
+              </div>
+              <div class="mt-1 text-xs">
+                <div class="font-bold">I went to the mountains.</div>
+                <div style="color:var(--w-muted)" class="mt-0.5">관사 the + 복수형이 자연스러워요.</div>
+                <button class="w-chip text-xs mt-2"><i data-lucide="message-circle-question" class="w-3 h-3"></i> 더 알아보기 →</button>
+              </div>
+            </div>
+          </div>
+          <div class="w-bubble-ai">Nice! Which mountain?</div>
+        </div>
+
+        <!-- 비활성 입력창 -->
+        <div class="w-box flex items-center gap-2 p-2" style="background:var(--w-fill); opacity:0.7;">
+          <span class="flex-1 text-xs" style="color:var(--w-muted)">완료된 대화입니다. 다시 시작하기를 누르면 같은 시나리오의 새 인스턴스가 생성됩니다.</span>
+          <button class="w-btn-disabled p-2"><i data-lucide="send-horizontal" class="w-4 h-4"></i></button>
+        </div>
+
+        <div class="screen-notes">
+          <details open>
+            <summary>Notes</summary>
+            <p>spec.md §20 — 히스토리 항목 클릭 시 진입. 입력창 비활성, 라벨드 섹션 토글·"더 알아보기"는 작동</p>
+            <ul>
+              <li>트리거: 사이드바 "히스토리" 항목 클릭</li>
+              <li>인터랙션: 라벨드 섹션 펼침/접힘 / ✱ "더 알아보기" → Sheet 열림 (별도 코치 대화) / "다시 시작하기" → 새 인스턴스 / 같은 시나리오에 진행 중 인스턴스가 있으면 7. 이어서/새로 화면으로</li>
+              <li>전환: "다시 시작하기" → 5. 채팅 또는 7. 옵션 화면</li>
+            </ul>
+          </details>
+        </div>
+      </main>
+    </div>
+  </div>
+</div>
+
+<!-- ───────── 7. 이어서/새로 시작 ───────── -->
+<div id="screen-6" class="screen">
+  <div class="screen-content max-w-6xl mx-auto p-6">
+    <h2 class="text-lg font-bold mb-5" style="color:var(--w-muted); border-bottom:1px solid var(--w-border); padding-bottom:8px;">
+      7. 이어서 하기 / 새로 시작 (시나리오 18)
+    </h2>
+
+    <div class="w-box w-app" style="overflow:hidden;">
+      <aside class="w-sidebar">
+        <div class="flex items-center gap-2 px-2 mb-3">
+          <i data-lucide="message-circle" class="w-4 h-4"></i>
+          <span class="text-sm font-bold">Flyn</span>
+        </div>
+        <button class="w-side-item w-full text-left">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          새 시나리오
+        </button>
+        <div class="w-section-label">내 시나리오</div>
+        <div class="w-side-item active"><span class="dot"></span>카페 주문 <i data-lucide="chevron-right" class="w-3 h-3 ml-auto"></i></div>
+        <div class="w-side-item"><span class="dot-ring"></span>면접 연습</div>
+      </aside>
+
+      <main class="w-main">
+        <div class="w-mobile-bar">
+          <button><i data-lucide="menu" class="w-5 h-5"></i></button>
+          <span class="text-xs">카페 주문</span>
+          <span></span>
+        </div>
+
+        <div class="flex flex-col items-center justify-center text-center gap-6 py-12" style="min-height:480px;">
+          <div class="w-20 h-20 rounded-full flex items-center justify-center" style="background: var(--w-fill);">
+            <i data-lucide="play" class="w-8 h-8"></i>
+          </div>
+          <div>
+            <div class="text-base font-bold">카페 주문</div>
+            <div class="text-xs mt-1" style="color:var(--w-muted)">Bluebird Coffee에서 손님으로 라떼 주문하기</div>
+          </div>
+
+          <div class="flex flex-col @md:flex-row gap-3 w-full max-w-md">
+            <button class="w-btn-primary flex-1 flex items-center justify-center gap-2 py-3">
+              <i data-lucide="arrow-right-circle" class="w-4 h-4"></i>
+              이어서 하기 (1/3)
+            </button>
+            <button class="w-btn-secondary flex-1 flex items-center justify-center gap-2 py-3">
+              <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+              새로 시작
+            </button>
+          </div>
+          <div class="text-xs max-w-md" style="color:var(--w-muted)">
+            새로 시작을 누르면 기존 진행 중 인스턴스는 종료됩니다 (미결정 — spec.md 참고)
+          </div>
+        </div>
+
+        <div class="screen-notes">
+          <details open>
+            <summary>Notes</summary>
+            <p>spec.md §18 — 진행 중 인스턴스가 있는 시나리오 클릭 시 분기</p>
+            <ul>
+              <li>트리거: 사이드바에서 ▸ 표시된 시나리오 클릭</li>
+              <li>인터랙션: "이어서 하기" → 기존 채팅 진입 / "새로 시작" → 기존 종료(가정) + 새 인스턴스</li>
+              <li>전환: 둘 다 → 5. 채팅</li>
+            </ul>
+          </details>
+        </div>
+      </main>
+    </div>
+  </div>
+</div>
+
+<!-- ───────── 8. 더 알아보기 Sheet ───────── -->
+<div id="screen-7" class="screen">
+  <div class="screen-content max-w-6xl mx-auto p-6">
+    <h2 class="text-lg font-bold mb-5" style="color:var(--w-muted); border-bottom:1px solid var(--w-border); padding-bottom:8px;">
+      8. 더 알아보기 Sheet (채팅 위 오버레이)
+    </h2>
+
+    <div class="w-box w-app" style="overflow:hidden; position:relative;">
+      <aside class="w-sidebar">
+        <div class="flex items-center gap-2 px-2 mb-3">
+          <i data-lucide="message-circle" class="w-4 h-4"></i>
+          <span class="text-sm font-bold">Flyn</span>
+        </div>
+        <button class="w-side-item w-full text-left">
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          새 시나리오
+        </button>
+        <div class="w-section-label">내 시나리오</div>
+        <div class="w-side-item active"><span class="dot"></span>카페 주문</div>
+      </aside>
+
+      <main class="w-main flex flex-col" style="min-height: 600px;">
+        <div class="w-mobile-bar">
+          <button><i data-lucide="menu" class="w-5 h-5"></i></button>
+          <span class="text-xs">카페 주문</span>
+          <button><i data-lucide="more-vertical" class="w-5 h-5"></i></button>
+        </div>
+
+        <!-- 흐릿한 메인 채팅 (뒤에 있음을 표현) -->
+        <div style="opacity:0.4">
+          <div class="pb-3 mb-3" style="border-bottom: 1px solid var(--w-border);">
+            <div class="text-sm font-bold">카페 주문</div>
+            <div class="text-xs" style="color:var(--w-muted)">바리스타와 라떼 주문하기</div>
+          </div>
+          <div class="flex flex-col gap-3">
+            <div class="w-bubble-ai">Hi! What can I get for you today?</div>
+            <div class="w-bubble-user">
+              <div>I want medium one</div>
+              <div class="w-label-section">
+                <div class="w-label-header"><span>✱ 교정</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- Sheet 패널 (desktop: 우측 / mobile: 하단) -->
+      <aside class="w-sheet">
+        <!-- 헤더 -->
+        <div class="flex items-center justify-between mb-3">
+          <div class="text-xs font-bold" style="color:var(--w-muted); text-transform:uppercase; letter-spacing:0.06em;">맥락 중인 교정</div>
+          <button><i data-lucide="x" class="w-4 h-4"></i></button>
+        </div>
+
+        <!-- 컨텍스트 카드 -->
+        <div class="w-box p-3 mb-3" style="background:var(--w-fill); border:none;">
+          <div class="text-xs line-through mb-1" style="color:var(--w-muted)">I want medium one</div>
+          <div class="text-xs font-bold">A medium one, please.</div>
+        </div>
+
+        <!-- 시드 메시지 -->
+        <div class="text-sm mb-3">이 교정에 대해 궁금한 점이 있나요?</div>
+
+        <!-- 자주 묻는 질문 칩 -->
+        <div class="flex flex-col gap-1.5 mb-4">
+          <button class="w-chip text-xs">왜 이게 틀려?</button>
+          <button class="w-chip text-xs">다른 표현은?</button>
+          <button class="w-chip text-xs">비슷한 예시</button>
+        </div>
+
+        <!-- 코치 대화 (예시 1턴) -->
+        <div class="flex-1 flex flex-col gap-2 overflow-y-auto mb-3">
+          <div class="w-bubble-user" style="font-size:12px;">왜 이게 틀려?</div>
+          <div class="w-bubble-ai" style="font-size:12px;">
+            "medium one"만 쓰면 무엇의 medium인지 듣는 사람이 헷갈려요. 영어에서는 보통 관사를 붙여
+            <span style="font-style:italic">"a medium one"</span> 또는
+            <span style="font-style:italic">"the medium one"</span>이라고 말합니다.
+          </div>
+        </div>
+
+        <!-- 코치 입력 -->
+        <div class="w-box flex items-center gap-2 p-2">
+          <input class="flex-1 border-none outline-none text-xs" placeholder="한국어로 질문하기..." style="background:transparent;" />
+          <button class="w-btn-primary p-1.5"><i data-lucide="send-horizontal" class="w-3 h-3"></i></button>
+        </div>
+      </aside>
+    </div>
+
+    <div class="screen-notes">
+      <details open>
+        <summary>Notes</summary>
+        <p>spec.md §15-§17 — 데스크탑 우측 드로어 / 모바일 바텀시트. 메인 채팅과 격리, 닫으면 내용 소실</p>
+        <ul>
+          <li>트리거: 펼친 ✱ 섹션의 "더 알아보기 →" 클릭 (채팅·히스토리 둘 다에서)</li>
+          <li>인터랙션: 시드 칩 클릭 또는 직접 한국어 질문 → 코치 한국어 응답 스트리밍 / 메인 채팅 영역 클릭해도 닫히지 않음 / X 또는 Esc → 닫힘</li>
+          <li>전환: 닫으면 대화 폐기. 다시 열면 시드 상태 복귀</li>
+        </ul>
+      </details>
+    </div>
+  </div>
+</div>
+
+<script>
+var currentScreen = 0;
+var screenIds = [];
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById('screen-' + id).classList.add('active');
+  document.querySelectorAll('nav button[id^="nav-"]').forEach(function(b) { b.classList.remove('active'); });
+  document.getElementById('nav-' + id).classList.add('active');
+  currentScreen = screenIds.indexOf(id);
+  var screen = document.getElementById('screen-' + id);
+  var defaultKey = screen.dataset.defaultScenario || 'default';
+  setScenario(id, defaultKey);
+}
+
+function setScenario(screenId, key) {
+  var screen = document.getElementById('screen-' + screenId);
+  if (!screen) return;
+  screen.dataset.active = key;
+  screen.querySelectorAll('[data-scenario]').forEach(function(el) {
+    var scenarios = el.dataset.scenario.split(/[,\s]+/).filter(Boolean);
+    var visible = scenarios.indexOf(key) !== -1 || scenarios.indexOf('all') !== -1;
+    el.style.display = visible ? '' : 'none';
+  });
+  screen.querySelectorAll('[data-toggle-scenario]').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.toggleScenario === key);
+  });
+  lucide.createIcons();
+}
+
+function setViewport(mode) {
+  document.body.classList.remove('viewport-mobile', 'viewport-desktop');
+  document.body.classList.add('viewport-' + mode);
+  document.querySelectorAll('.vp-toggle button').forEach(function(b) { b.classList.remove('active'); });
+  document.getElementById('vp-' + mode).classList.add('active');
+  lucide.createIcons();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('nav button[id^="nav-"]').forEach(function(b) {
+    screenIds.push(parseInt(b.id.replace('nav-', '')));
+  });
+  var first = document.querySelector('nav button[id^="nav-"]');
+  if (first) first.click();
+  lucide.createIcons();
+});
+</script>
+</body>
+</html>
