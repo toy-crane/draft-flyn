@@ -1,6 +1,7 @@
 "use client";
 
 import { Message, MessageContent } from "@/components/ai-elements/message";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { Correction } from "@/types/message";
 
@@ -19,6 +20,8 @@ export type MessageBubbleProps = {
   translation?: string | null;
   /** Whether the message-level analysis is still pending. */
   analyzing?: boolean;
+  /** Called when the user clicks "더 알아보기 →" inside a ✱/💡 section. */
+  onLearnMore?: (messageId: string) => void;
 };
 
 function MarkChip({ kind }: { kind: "ok" | "correction" | "alternative" | "translation" }) {
@@ -106,6 +109,18 @@ export function MessageBubble(props: MessageBubbleProps) {
           <LabeledSection
             kind="correction"
             storageKey={`${props.messageId}:correction`}
+            action={
+              props.onLearnMore && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => props.onLearnMore?.(props.messageId)}
+                >
+                  더 알아보기 →
+                </Button>
+              )
+            }
           >
             <LabeledSectionContent
               primary={props.correction.corrected_text ?? ""}
@@ -118,6 +133,18 @@ export function MessageBubble(props: MessageBubbleProps) {
           <LabeledSection
             kind="alternative"
             storageKey={`${props.messageId}:alternative`}
+            action={
+              props.onLearnMore && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => props.onLearnMore?.(props.messageId)}
+                >
+                  더 알아보기 →
+                </Button>
+              )
+            }
           >
             <LabeledSectionContent
               primary={props.correction.corrected_text ?? ""}

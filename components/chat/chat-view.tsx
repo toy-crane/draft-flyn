@@ -17,6 +17,10 @@ import { useRouter } from "next/navigation";
 import { ChatEndMenu } from "./chat-end-menu";
 import { CompletionPromptDialog } from "./completion-prompt-dialog";
 import { GoalBar } from "./goal-bar";
+import {
+  LearnMorePanel,
+  type LearnMoreContext,
+} from "./learn-more-panel";
 import { MessageBubble } from "./message-bubble";
 import { PromptInput, type PromptInputHandle } from "./prompt-input";
 import { TranslationPreview } from "./translation-preview";
@@ -93,6 +97,7 @@ export function ChatView({
     initialAchievedGoalIds.length >= scenario.goals.length,
   );
   const [finishing, setFinishing] = useState(false);
+  const [learnMore, setLearnMore] = useState<LearnMoreContext | null>(null);
   const router = useRouter();
 
   const transport = useMemo(
@@ -117,6 +122,28 @@ export function ChatView({
   });
 
   const isStreaming = status === "submitted" || status === "streaming";
+
+  const openLearnMore = useCallback(
+    (messageId: string) => {
+      const meta = messageMeta[messageId];
+      const correction = meta?.correction;
+      if (!correction) return;
+      const message = messages.find((m) => m.id === messageId);
+      const englishText =
+        message?.parts
+          ?.filter((p) => p.type === "text")
+          .map((p) => p.text)
+          .join("") ?? "";
+      const userOriginal = meta.koreanOriginal ?? englishText;
+      setLearnMore({
+        contextLabel: scenario.summary || scenario.situation,
+        userOriginal,
+        correctionText: correction.corrected_text ?? "",
+        explanation: correction.explanation,
+      });
+    },
+    [messageMeta, messages, scenario],
+  );
 
   // Translation preview state — driven by typing in the prompt input.
   const [draft, setDraft] = useState("");
@@ -301,6 +328,7 @@ export function ChatView({
                 correction={meta?.correction}
                 translation={meta?.translation}
                 analyzing={analyzing.has(message.id)}
+                onLearnMore={openLearnMore}
               />
             );
           })}
@@ -326,6 +354,12 @@ export function ChatView({
         disabled={isStreaming}
         onSubmit={handleSubmit}
         onChange={setDraft}
+      />
+
+      <LearnMorePanel
+        open={!!learnMore}
+        onOpenChange={(o) => (!o ? setLearnMore(null) : undefined)}
+        context={learnMore}
       />
 
       <CompletionPromptDialog
