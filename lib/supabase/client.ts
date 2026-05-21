@@ -3,16 +3,17 @@ import { createBrowserClient } from "@supabase/ssr";
 import type { Database } from "@/types/database";
 
 export function createClient() {
-  return createBrowserClient<Database>(
-    requireEnv("NEXT_PUBLIC_SUPABASE_URL"),
-    requireEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"),
-  );
-}
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-function requireEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`Missing environment variable: ${name}`);
+  if (!url) {
+    throw new Error("Missing environment variable: NEXT_PUBLIC_SUPABASE_URL");
   }
-  return value;
+  if (!publishableKey) {
+    throw new Error(
+      "Missing environment variable: NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+    );
+  }
+
+  return createBrowserClient<Database>(url, publishableKey);
 }
