@@ -1,3 +1,4 @@
+import { DirtyGuardProvider } from "@/components/scenarios/dirty-guard";
 import { AppShell } from "@/components/sidebar/app-shell";
 
 export default function AppLayout({
@@ -5,5 +6,9 @@ export default function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <AppShell>{children}</AppShell>;
+  return (
+    <DirtyGuardProvider>
+      <AppShell>{children}</AppShell>
+    </DirtyGuardProvider>
+  );
 }

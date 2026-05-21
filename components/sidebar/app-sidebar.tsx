@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { GuardedLink as Link } from "@/components/scenarios/dirty-guard";
 import { PlusIcon } from "lucide-react";
 
 import {

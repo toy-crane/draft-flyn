@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { useDirtyGuard } from "@/components/scenarios/dirty-guard";
 import {
   Field,
   FieldDescription,
@@ -73,6 +74,18 @@ export function ScenarioForm({
     fields.situation.length > 0 &&
     fields.theirRole.length > 0 &&
     fields.myRole.length > 0;
+
+  const { setDirty } = useDirtyGuard();
+  const isDirty =
+    situation.trim().length > 0 ||
+    theirRole.trim().length > 0 ||
+    myRole.trim().length > 0 ||
+    memo.trim().length > 0;
+
+  useEffect(() => {
+    setDirty(isDirty);
+    return () => setDirty(false);
+  }, [isDirty, setDirty]);
 
   // Debounced chip refresh whenever upstream values change.
   useEffect(() => {
