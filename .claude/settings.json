@@ -24,6 +24,7 @@
     ]
   },
   "enabledPlugins": {
-    "playbook-essentials@claude-code-playbook": true
+    "playbook-essentials@claude-code-playbook": true,
+    "supabase@claude-plugins-official": true
   }
 }
