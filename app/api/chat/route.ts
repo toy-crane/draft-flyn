@@ -9,11 +9,13 @@ export const maxDuration = 30;
 type ChatRequest = {
   conversationId: string;
   messages: UIMessage[];
+  /** Map from message id → Korean original text (when the user typed Korean). */
+  koreanOriginals?: Record<string, string>;
 };
 
 export async function POST(req: Request) {
   const body = (await req.json()) as ChatRequest;
-  const { conversationId, messages } = body;
+  const { conversationId, messages, koreanOriginals } = body;
 
   const supabase = await createClient();
   const {
@@ -46,25 +48,28 @@ export async function POST(req: Request) {
   // original input was Korean.
   const lastTurn = messages[messages.length - 1];
   if (lastTurn?.role === "user") {
-    const originalText =
+    const englishText =
       lastTurn.parts
         ?.filter((p) => p.type === "text")
         .map((p) => p.text)
         .join("") ?? "";
-    if (originalText.length > 0) {
+    if (englishText.length > 0) {
       const { data: existing } = await supabase
         .from("messages")
         .select("id")
         .eq("id", lastTurn.id)
         .maybeSingle();
       if (!existing) {
+        const koreanOriginal = koreanOriginals?.[lastTurn.id] ?? null;
         await supabase.from("messages").insert({
           id: lastTurn.id,
           conversation_id: conversationId,
           user_id: user.id,
           role: "user",
-          original_text: originalText,
-          english_text: originalText,
+          // Spec data-consistency invariant: original_text holds what the
+          // user typed (Korean if they typed Korean).
+          original_text: koreanOriginal ?? englishText,
+          english_text: englishText,
         });
       }
     }

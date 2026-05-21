@@ -2,7 +2,7 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, type UIMessage } from "ai";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   Conversation,
@@ -14,7 +14,8 @@ import type { Scenario } from "@/types/scenario";
 
 import { GoalBar } from "./goal-bar";
 import { MessageBubble } from "./message-bubble";
-import { PromptInput } from "./prompt-input";
+import { PromptInput, type PromptInputHandle } from "./prompt-input";
+import { TranslationPreview } from "./translation-preview";
 
 export type ChatViewProps = {
   conversationId: string;
@@ -25,14 +26,22 @@ export type ChatViewProps = {
 
 type MessageMeta = {
   correction: Correction | null;
+  /** English text shown in the 🌐 section (only for Korean-input messages) */
   translation: string | null;
+  /** Korean original used as the bubble's primary text (only for Korean input) */
+  koreanOriginal: string | null;
 };
 
+const KOREAN_REGEX = /[가-힯ᄀ-ᇿ㄰-㆏]/;
+
 function toUIMessage(dbMessage: DbMessage): UIMessage {
+  // AI must always see English. For Korean-input messages, english_text
+  // holds the translated value; otherwise it equals original_text.
+  const text = dbMessage.english_text ?? dbMessage.original_text;
   return {
     id: dbMessage.id,
     role: dbMessage.role,
-    parts: [{ type: "text", text: dbMessage.original_text }],
+    parts: [{ type: "text", text }],
   };
 }
 
@@ -49,27 +58,21 @@ export function ChatView({
   initialMessages,
   initialAchievedGoalIds,
 }: ChatViewProps) {
-  const transport = useMemo(
-    () =>
-      new DefaultChatTransport({
-        api: "/api/chat",
-        prepareSendMessagesRequest: ({ messages, id }) => ({
-          body: { conversationId: id, messages },
-        }),
-      }),
-    [],
-  );
+  const koreanOriginalsRef = useRef<Record<string, string>>({});
 
   const initialMeta = useMemo(() => {
     const map: Record<string, MessageMeta> = {};
     for (const m of initialMessages) {
       if (m.role !== "user") continue;
+      const isTranslated =
+        !!m.english_text && m.english_text !== m.original_text;
+      if (isTranslated) {
+        koreanOriginalsRef.current[m.id] = m.original_text;
+      }
       map[m.id] = {
         correction: m.correction ?? null,
-        translation:
-          m.english_text && m.english_text !== m.original_text
-            ? m.english_text
-            : null,
+        translation: isTranslated ? m.english_text! : null,
+        koreanOriginal: isTranslated ? m.original_text : null,
       };
     }
     return map;
@@ -82,6 +85,21 @@ export function ChatView({
     initialAchievedGoalIds,
   );
 
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: "/api/chat",
+        prepareSendMessagesRequest: ({ messages, id }) => ({
+          body: {
+            conversationId: id,
+            messages,
+            koreanOriginals: koreanOriginalsRef.current,
+          },
+        }),
+      }),
+    [],
+  );
+
   const { messages, sendMessage, status, error } = useChat({
     id: conversationId,
     messages: initialMessages.map(toUIMessage),
@@ -90,8 +108,48 @@ export function ChatView({
 
   const isStreaming = status === "submitted" || status === "streaming";
 
+  // Translation preview state — driven by typing in the prompt input.
+  const [draft, setDraft] = useState("");
+  const [translation, setTranslation] = useState<{
+    forText: string;
+    english: string | null;
+  }>({ forText: "", english: null });
+  const [translating, setTranslating] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const inputRef = useRef<PromptInputHandle | null>(null);
+
+  // Debounced Korean → English fetch.
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!KOREAN_REGEX.test(draft)) {
+      setTranslation({ forText: "", english: null });
+      setTranslating(false);
+      return;
+    }
+    setTranslating(true);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch("/api/translate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: draft }),
+        });
+        if (!res.ok) return;
+        const data: { en: string } = await res.json();
+        setTranslation({ forText: draft, english: data.en });
+      } catch {
+        setTranslation({ forText: "", english: null });
+      } finally {
+        setTranslating(false);
+      }
+    }, 500);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [draft]);
+
   const runAnalysis = useCallback(
-    async (messageId: string, text: string) => {
+    async (messageId: string, englishText: string) => {
       setAnalyzing((prev) => {
         const next = new Set(prev);
         next.add(messageId);
@@ -101,7 +159,11 @@ export function ChatView({
         const res = await fetch("/api/analysis", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ conversationId, messageId, text }),
+          body: JSON.stringify({
+            conversationId,
+            messageId,
+            text: englishText,
+          }),
         });
         if (!res.ok) return;
         const data: { correction: Correction; goals_achieved: number[] } =
@@ -111,6 +173,7 @@ export function ChatView({
           [messageId]: {
             correction: data.correction,
             translation: prev[messageId]?.translation ?? null,
+            koreanOriginal: prev[messageId]?.koreanOriginal ?? null,
           },
         }));
         if (data.goals_achieved.length > 0) {
@@ -121,8 +184,7 @@ export function ChatView({
           });
         }
       } catch {
-        // Analysis failure is a silent fallback (spec scenario 25);
-        // the bubble simply renders without a mark.
+        // silent fallback (spec scenario 25)
       } finally {
         setAnalyzing((prev) => {
           const next = new Set(prev);
@@ -134,20 +196,56 @@ export function ChatView({
     [conversationId],
   );
 
-  const handleSubmit = useCallback(
-    (text: string) => {
+  const submitTurn = useCallback(
+    (englishText: string, koreanOriginal: string | null) => {
       const id = generateId();
-      // Fire in parallel: chat stream + analysis. The chat call does not
-      // wait for analysis (invariant: 응답 속도 / 동시성).
+      if (koreanOriginal) {
+        koreanOriginalsRef.current[id] = koreanOriginal;
+        setMessageMeta((prev) => ({
+          ...prev,
+          [id]: {
+            correction: null,
+            translation: englishText,
+            koreanOriginal,
+          },
+        }));
+      }
       void sendMessage({
         id,
         role: "user",
-        parts: [{ type: "text", text }],
+        parts: [{ type: "text", text: englishText }],
       });
-      void runAnalysis(id, text);
+      void runAnalysis(id, englishText);
     },
     [sendMessage, runAnalysis],
   );
+
+  const handleSubmit = useCallback(
+    (text: string) => {
+      // If the text matches a translated draft, send English and attach
+      // the Korean original as the visible bubble text + 🌐 section.
+      if (
+        translation.english &&
+        translation.forText === text &&
+        KOREAN_REGEX.test(text)
+      ) {
+        submitTurn(translation.english, text);
+      } else {
+        submitTurn(text, null);
+      }
+      setDraft("");
+      setTranslation({ forText: "", english: null });
+    },
+    [submitTurn, translation],
+  );
+
+  const handleSendTranslationCard = useCallback(() => {
+    if (!translation.english) return;
+    submitTurn(translation.english, translation.forText);
+    setDraft("");
+    setTranslation({ forText: "", english: null });
+    inputRef.current?.clear();
+  }, [submitTurn, translation]);
 
   return (
     <div className="flex h-full flex-col">
@@ -156,13 +254,17 @@ export function ChatView({
       <Conversation className="flex-1">
         <ConversationContent className="mx-auto w-full max-w-2xl px-4 py-4">
           {messages.map((message) => {
-            const text =
+            const englishText =
               message.parts
                 ?.filter((p) => p.type === "text")
                 .map((p) => p.text)
                 .join("") ?? "";
             const meta =
               message.role === "user" ? messageMeta[message.id] : undefined;
+            const text =
+              message.role === "user" && meta?.koreanOriginal
+                ? meta.koreanOriginal
+                : englishText;
             return (
               <MessageBubble
                 key={message.id}
@@ -184,7 +286,20 @@ export function ChatView({
         <ConversationScrollButton />
       </Conversation>
 
-      <PromptInput disabled={isStreaming} onSubmit={handleSubmit} />
+      <div className="flex flex-col px-3">
+        <TranslationPreview
+          english={translation.english}
+          loading={translating}
+          onSend={handleSendTranslationCard}
+        />
+      </div>
+
+      <PromptInput
+        ref={inputRef}
+        disabled={isStreaming}
+        onSubmit={handleSubmit}
+        onChange={setDraft}
+      />
     </div>
   );
 }
