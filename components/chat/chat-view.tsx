@@ -9,9 +9,12 @@ import {
   ConversationContent,
   ConversationScrollButton,
 } from "@/components/ai-elements/conversation";
+import { completeConversationAction } from "@/app/scenarios/actions";
 import type { Message as DbMessage, Correction } from "@/types/message";
 import type { Scenario } from "@/types/scenario";
+import { useRouter } from "next/navigation";
 
+import { CompletionPromptDialog } from "./completion-prompt-dialog";
 import { GoalBar } from "./goal-bar";
 import { MessageBubble } from "./message-bubble";
 import { PromptInput, type PromptInputHandle } from "./prompt-input";
@@ -84,6 +87,12 @@ export function ChatView({
   const [achievedGoalIds, setAchievedGoalIds] = useState<number[]>(
     initialAchievedGoalIds,
   );
+  const [completionPromptOpen, setCompletionPromptOpen] = useState(false);
+  const [hasShownCompletion, setHasShownCompletion] = useState(
+    initialAchievedGoalIds.length >= scenario.goals.length,
+  );
+  const [finishing, setFinishing] = useState(false);
+  const router = useRouter();
 
   const transport = useMemo(
     () =>
@@ -180,7 +189,15 @@ export function ChatView({
           setAchievedGoalIds((prev) => {
             const next = new Set(prev);
             for (const id of data.goals_achieved) next.add(id);
-            return Array.from(next);
+            const arr = Array.from(next);
+            if (
+              arr.length >= scenario.goals.length &&
+              !hasShownCompletion
+            ) {
+              setCompletionPromptOpen(true);
+              setHasShownCompletion(true);
+            }
+            return arr;
           });
         }
       } catch {
@@ -299,6 +316,24 @@ export function ChatView({
         disabled={isStreaming}
         onSubmit={handleSubmit}
         onChange={setDraft}
+      />
+
+      <CompletionPromptDialog
+        open={completionPromptOpen}
+        finishing={finishing}
+        onContinue={() => setCompletionPromptOpen(false)}
+        onFinish={async () => {
+          setFinishing(true);
+          try {
+            await completeConversationAction(conversationId);
+            setCompletionPromptOpen(false);
+            router.push("/");
+          } catch {
+            // Stay on the chat so the user can retry.
+          } finally {
+            setFinishing(false);
+          }
+        }}
       />
     </div>
   );
