@@ -124,6 +124,18 @@ export function ChatView({
 
   const isStreaming = status === "submitted" || status === "streaming";
 
+  // Side-effect-free completion trigger: once achieved goals cover all of
+  // the scenario's goals, open the prompt exactly once.
+  useEffect(() => {
+    if (
+      achievedGoalIds.length >= scenario.goals.length &&
+      !hasShownCompletion
+    ) {
+      setCompletionPromptOpen(true);
+      setHasShownCompletion(true);
+    }
+  }, [achievedGoalIds.length, hasShownCompletion, scenario.goals.length]);
+
   const openLearnMore = useCallback(
     (messageId: string) => {
       const meta = messageMeta[messageId];
@@ -218,15 +230,7 @@ export function ChatView({
           setAchievedGoalIds((prev) => {
             const next = new Set(prev);
             for (const id of data.goals_achieved) next.add(id);
-            const arr = Array.from(next);
-            if (
-              arr.length >= scenario.goals.length &&
-              !hasShownCompletion
-            ) {
-              setCompletionPromptOpen(true);
-              setHasShownCompletion(true);
-            }
-            return arr;
+            return Array.from(next);
           });
         }
       } catch {
