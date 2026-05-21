@@ -112,3 +112,24 @@ export async function createScenarioAction(input: {
   revalidatePath("/", "layout");
   redirect(`/conversations/${conversation.id}`);
 }
+
+export async function completeConversationAction(
+  conversationId: string,
+): Promise<void> {
+  const { supabase, userId } = await requireUserId();
+
+  const { error } = await supabase
+    .from("conversations")
+    .update({
+      status: "completed",
+      completed_at: new Date().toISOString(),
+    })
+    .eq("id", conversationId)
+    .eq("user_id", userId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/", "layout");
+}
